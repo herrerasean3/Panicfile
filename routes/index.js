@@ -3,6 +3,7 @@ var router = express.Router();
 let pgp = require('pg-promise')();
 let connString = process.env.DATABASE_URL;
 let dbase = pgp(connString);
+var fs = require('fs');
 
 var db = require('../db/queries');
 
@@ -10,7 +11,7 @@ var multer = require('multer')
 
 var upload = multer({
   dest: __dirname + '/../public/files/',
-  limits: {fileSize: 10000000, files: 1},
+  limits: {fileSize: 20971520, files: 1},
 })
 
 function bytesToSize(bytes) {
@@ -28,13 +29,12 @@ function bytesToSize(bytes) {
 });*/
 
 router.get('/', db.getAllFiles);
+
 router.get('/download', function(req, res){
   var file = __dirname + `/../public/files/${req.query.renamed}`;
   var newname = `${req.query.filename}`;
   res.download(file, newname);
 });
-
-router.get('/people/:id', db.getOneCast);
 
 //Upload Functionality
 router.post('/upload', upload.single('upload'), function(req, res) {
@@ -43,10 +43,12 @@ router.post('/upload', upload.single('upload'), function(req, res) {
 	dbase.none('INSERT INTO filelist(filename, renamed, filesize, category)' + 'VALUES(${originalname}, ${filename},'+ `'${filesize}', '${req.body.cat}')`, req.file)
 	.then(
     res.status(200),
-    setTimeout(res.redirect('/'), 100000)
+    setTimeout(res.redirect('/'), 200000)
 		)
 });
 
-router.delete('/people/:id', db.deleteCast);
+router.get('/delete', db.deleteFile);
+
+router.get('/search', db.searchFile);
 
 module.exports = router;

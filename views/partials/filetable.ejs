@@ -14,7 +14,7 @@
 			<th><a href='download/?renamed=<%= d.renamed %>&filename=<%= d.filename %>'><%= d.filename %></a></th>
 			<th><%= d.uploaded %></th>
 			<th><%= d.filesize %></th>
-			<th><%= d.file_id %></th>
+			<th><a id='delete' href='delete/?renamed=<%= d.renamed %>&fileid=<%= d.file_id %>'>X</a></th>
 		</tr>
 	<% }) %>
 </table>

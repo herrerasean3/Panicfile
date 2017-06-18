@@ -57,4 +57,10 @@ th, td {
 
 a, a:link, a:visited, a:hover, a:active {
   color: #2842f4;
+  text-decoration: none;
+}
+
+#delete, #delete:link, #delete:visited, #delete:hover, #delete:active {
+  color: #ff0000;
+
 }

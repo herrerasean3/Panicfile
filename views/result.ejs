@@ -4,23 +4,20 @@
   <%- include ./partials/head %>
 
   <body>
-	
-	<%- include ./partials/header %>	
-	
-	<main>
+  
+  <%- include ./partials/header %>  
+  
+  <main>
 
-    	<%- include ./partials/search %>
+        <%- include ./partials/upload %>
+        <%- include ./partials/search %>
+        
+        <% if(data) { %>
+        <%- include ./partials/filetable %>
+        <% } %>
 
-    	<% if(datasolo) { %>
-    		<%- include ./partials/searchresult_solo %>
-    	<% } %>
-
-    	<% if(data) { %>
-    		<%- include ./partials/searchresult %>
-    	<% } %>
-    </main>  
-
-  <%- include ./partials/footer %>
-	<%- include ./partials/script %>
+    </main>
+    <%- include ./partials/footer %>
+    <%- include ./partials/script %>
   </body>
 </html>

@@ -3,43 +3,49 @@
 let pgp = require('pg-promise')();
 let connString = process.env.DATABASE_URL;
 let db = pgp(connString);
+var fs = require('fs');
 
-//Runs SELECT * FROM view.
-//Returns everything in the table without filtering.
-//Satisfies R in CRUD.
-function getAllCast(req, res, next) {
-  db.any('DROP VIEW IF EXISTS compiled; CREATE VIEW compiled AS SELECT * FROM castmember, factionList, seriesEra, serieslist, mobileweapon, manufacturer, voiceactor WHERE (factionList.faction_id = castmember.faction) AND (mobileweapon.mobileweapon_id = castmember.mobile_weapon) AND (manufacturer.manufacturer_id = mobileweapon.manufacturer) AND (voiceactor.voice_id = castmember.voice_actor) AND (serieslist.series_id = castmember.appears_in) AND (seriesEra.era_id = serieslist.series_era) ORDER BY cast_id ASC; select cast_name, faction_name, model, english_voice, japanese_voice, era_name from compiled')
-    .then(function(data) {
-      console.log('DATA:', data);
-      res.status(200)
-        console.log(data)
-      res.render('result', {title:"Gundam API", data:data, datasolo: false});
-    })
-    .catch(function(err) {
-      return next(err);
-    });
+function getDestination (req, file, cb) {
+  cb(null, '/../public/files')
 }
 
-function getAllMWeapons(req, res, next) {
-  db.any('DROP VIEW IF EXISTS compiled; CREATE VIEW compiled AS SELECT * FROM mobileweapon, manufacturer, seriesEra, serieslist WHERE (manufacturer.manufacturer_id = mobileweapon.manufacturer) AND (serieslist.series_id = mobileweapon.produced_in) AND (seriesEra.era_id = serieslist.series_era) ORDER BY mobileweapon_id ASC; select model, manufacturer_name, era_name from compiled')
-    .then(function(data) {
-      console.log('DATA:', data);
-      res.status(200)
-        console.log(data)
-      res.render('result', {title:"Gundam API", data:data, datasolo: false});
-    })
-    .catch(function(err) {
-      return next(err);
-    });
+function MyCustomStorage (opts) {
+  this.getDestination = (opts.destination || getDestination)
 }
 
-function getAllManufacturers(req, res, next) {
-  db.any('DROP VIEW IF EXISTS compiled; CREATE VIEW compiled AS SELECT * FROM manufacturer, mobileweapon, seriesEra, serieslist WHERE (manufacturer.manufacturer_id = mobileweapon.manufacturer) AND (serieslist.series_id = mobileweapon.produced_in) AND (seriesEra.era_id = serieslist.series_era) ORDER BY manufacturer_id ASC; select manufacturer_name, model, era_name from compiled')
+MyCustomStorage.prototype._handleFile = function _handleFile (req, file, cb) {
+  this.getDestination(req, file, function (err, path) {
+    if (err) return cb(err)
+
+    var outStream = fs.createWriteStream(path)
+
+    file.stream.pipe(outStream)
+    outStream.on('error', cb)
+    outStream.on('finish', function () {
+      cb(null, {
+        path: path,
+        size: outStream.bytesWritten
+      })
+    })
+  })
+}
+
+MyCustomStorage.prototype._removeFile = function _removeFile (req, file, cb) {
+  fs.unlink(file.path, cb)
+}
+
+module.exports = function (opts) {
+  return new MyCustomStorage(opts)
+}
+
+//Whenever the index is loaded, calls this.
+//Grabs the entire filelist, then orders said filelist by timestamp and id, descending.
+//The idea is to have the most recent files at the top of the table.
+function getAllFiles(req, res, next) {
+  db.any('SELECT * FROM filelist ORDER BY uploaded DESC')
     .then(function(data) {
-      console.log('DATA:', data);
       res.status(200)
-        console.log(data)
-      res.render('result', {title:"Gundam API", data:data, datasolo: false});
+      res.render('index', {data:data});
     })
     .catch(function(err) {
       return next(err);
@@ -57,32 +63,6 @@ function getOneCast(req, res, next) {
       res.status(200)
       console.log(data)
       res.render('result', {title:"Gundam API", datasolo:data, data: false});
-    })
-    .catch(function(err) {
-      return next(err);
-    });
-}
-
-function getOneMWeapon(req, res, next) {
-  let mobileweapon_id = parseInt(req.params.id);
-  db.one('DROP VIEW IF EXISTS compiled; CREATE VIEW compiled AS SELECT * FROM mobileweapon, manufacturer, seriesEra, serieslist WHERE (manufacturer.manufacturer_id = mobileweapon.manufacturer) AND (serieslist.series_id = mobileweapon.produced_in) AND (seriesEra.era_id = serieslist.series_era) ORDER BY mobileweapon_id ASC; select model, manufacturer_name, era_name from compiled where mobileweapon_id = $1', mobileweapon_id)
-    .then(function(data) {
-      res.status(200)
-      console.log(data)
-      res.render('result', {title:"Gundam API", datasolo:data, data: false});
-    })
-    .catch(function(err) {
-      return next(err);
-    });
-}
-
-function getOneManufacturer(req, res, next) {
-  let manufacturer_id = parseInt(req.params.id);
-  db.many('DROP VIEW IF EXISTS compiled; CREATE VIEW compiled AS SELECT * FROM manufacturer, mobileweapon, serieslist, seriesEra WHERE (manufacturer.manufacturer_id = mobileweapon.manufacturer) AND (serieslist.series_id = mobileweapon.produced_in) AND (seriesEra.era_id = serieslist.series_era) ORDER BY manufacturer_id ASC; select model, manufacturer_name, era_name from compiled where manufacturer_id = $1', manufacturer_id)
-    .then(function(data) {
-      res.status(200)
-      console.log(data)
-      res.render('result', {title:"Gundam API", datasolo: false, data: data});
     })
     .catch(function(err) {
       return next(err);
@@ -110,91 +90,6 @@ function createCast(req, res, next) {
     });
 }
 
-function createMWeapon(req, res, next) {
-  req.body.age = parseInt(req.body.age);
-  console.log('req.body ===>', req.body)
-  db.none('insert into mobileweapon(model, manufacturer, produced_in)' +
-      'values(${model}, ${manufacturer}, ${produced_in})',
-      req.body)
-    .then(function() {
-      res.status(200)
-        .json({
-          status: 'success',
-          message: 'Mobile Weapon Inserted'
-        });
-    })
-    .catch(function(err) {
-      return next(err);
-    });
-}
-
-function createManufacturer(req, res, next) {
-  req.body.age = parseInt(req.body.age);
-  console.log('req.body ===>', req.body)
-  db.none('insert into manufacturer(manufacturer_name)' +
-      'values(${manufacturer_name})',
-      req.body)
-    .then(function() {
-      res.status(200)
-        .json({
-          status: 'success',
-          message: 'Mobile Weapon Inserted'
-        });
-    })
-    .catch(function(err) {
-      return next(err);
-    });
-}
-
-//Just as wordy as the one above.
-//Allows the user to change content in a row to whatever.
-//Takes seven total inputs, with the seventh input being the ID targetted for updating.
-//Satisfies U of CRUD.
-function updateCast(req, res, next) {
-  db.none('update castmember set cast_name=$1, faction=$2, mobile_weapon=$3, voice_actor=$4, appears_in=$5 where cast_id=$6', [req.body.cast_name, parseInt(req.body.faction), parseInt(req.body.mobile_weapon), parseInt(req.body.voice_actor), parseInt(req.body.appears_in), parseInt(req.params.id)
-    ])
-    .then(function() {
-      res.status(200)
-        .json({
-          status: 'success',
-          message: 'Character Updated'
-        });
-    })
-    .catch(function(err) {
-      return next(err);
-    });
-}
-
-function updateMWeapon(req, res, next) {
-  db.none('update mobileweapon set model=$1, manufacturer=$2, produced_in=$3 where mobileweapon_id=$4', [req.body.model, parseInt(req.body.manufacturer), parseInt(req.body.produced_in), parseInt(req.params.id)
-    ])
-    .then(function() {
-      res.status(200)
-        .json({
-          status: 'success',
-          message: 'Character Updated'
-        });
-    })
-    .catch(function(err) {
-      return next(err);
-    });
-}
-
-function updateManufacturer(req, res, next) {
-  db.none('update manufacturer set manufacturer_name=$1 where manufacturer_id=$2', [req.body.manufacturer_name, parseInt(req.params.id)
-    ])
-    .then(function() {
-      res.status(200)
-        .json({
-          status: 'success',
-          message: 'Character Updated'
-        });
-    })
-    .catch(function(err) {
-      return next(err);
-    });
-}
-
 //Deletes the row at the target ID. Simple enough.
 //Satisfies D of CRUD.
 function deleteCast(req, res, next) {
@@ -212,67 +107,11 @@ function deleteCast(req, res, next) {
     });
 }
 
-function deleteMWeapon(req, res, next) {
-  let mobileweaponID = parseInt(req.params.id);
-  db.result('delete from mobileweapon where mobileweapon_id = $1', mobileweaponID)
-    .then(function(result) {
-      res.status(200)
-        .json({
-          status: 'success',
-          message: `Removed Mobile Weapon at ${result.rowCount}`
-        });
-    })
-    .catch(function(err) {
-      return next(err);
-    });
-}
-
-function deleteManufacturer(req, res, next) {
-  let manufacturerID = parseInt(req.params.id);
-  db.result('delete from manufacturer where manufacturer_id = $1', manufacturerID)
-    .then(function(result) {
-      res.status(200)
-        .json({
-          status: 'success',
-          message: `Removed Mobile Weapon at ${result.rowCount}`
-        });
-    })
-    .catch(function(err) {
-      return next(err);
-    });
-}
-
-// function getTest(req, res, next) {
-//   let target = req.query.target;
-//   let filter = req.query.filter;
-//   db.any(`DROP VIEW IF EXISTS compiled; CREATE VIEW compiled AS SELECT * FROM castmember, factionList, seriesEra, serieslist, mobileweapon, manufacturer, voiceactor WHERE (factionList.faction_id = castmember.faction) AND (mobileweapon.mobileweapon_id = castmember.mobile_weapon) AND (manufacturer.manufacturer_id = mobileweapon.manufacturer) AND (voiceactor.voice_id = castmember.voice_actor) AND (serieslist.series_id = castmember.appears_in) AND (seriesEra.era_id = serieslist.series_era) ORDER BY cast_id ASC; select ${target} from compiled where ${filter}`)
-//     .then(function(data) {
-//       console.log('DATA:', data);
-//       res.status(200)
-//         .json({
-//           data: data
-//         });
-//     })
-//     .catch(function(err) {
-//       return next(err);
-//     });
-// }
 
 //CRUD
 module.exports = {
   createCast: createCast, //CREATE
-  getAllCast: getAllCast, //READ
+  getAllFiles: getAllFiles, //READ
   getOneCast: getOneCast,   //READ
-  updateCast: updateCast,   //UPDATE
   deleteCast: deleteCast,    //DELETE
-  getAllMWeapons: getAllMWeapons, //READ
-  getOneMWeapon: getOneMWeapon, //READ
-  createMWeapon: createMWeapon, //CREATE
-  updateMWeapon: updateMWeapon, //UPDATE
-  deleteMWeapon: deleteMWeapon, //DELETE
-  getAllManufacturers: getAllManufacturers, //READ
-  getOneManufacturer: getOneManufacturer, //READ
-  createManufacturer: createManufacturer, //CREATE
-  updateManufacturer: updateManufacturer, //UPDATE
-  deleteManufacturer: deleteManufacturer //DELETE
 };

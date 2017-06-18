@@ -1,0 +1,60 @@
+@font-face {
+	font-family: 'trenchthin';
+	src: url('../fonts/trench100free-webfont.woff2') format('woff2'),
+	url('../fonts/trench100free-webfont.woff') format('woff');
+	font-weight: normal;
+    font-style: normal;
+
+}
+
+html,body,div,span,a,li,td,th {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+/* Background pattern from Subtle Patterns */
+body {
+	padding: 50px;
+	background-image: url('../images/dark-triangles.png');
+	background-color: #000000;
+	background-repeat: repeat;
+}
+
+header {
+	font-family: 'trenchthin', Helvetica, Arial, sans-serif;
+	width 100%;
+	background: rgba(0,0,0,0.5);
+	color: white;
+}
+
+header img {
+	display: inline-block;
+	width: 100px;
+}
+
+header h1 {
+	display: inline-block;
+	margin: 0;
+}
+
+main {
+	display: -webkit-flex;
+	background: rgba(255,255,255,0.5);
+	display: flex;
+	-webkit-flex-direction: column;
+	flex-direction: column;
+	margin: auto 0px;
+}
+
+table {
+	width: 100%;
+	margin: auto 0px;
+}
+
+th, td {
+   border: 1px solid black;
+   padding: 10px;
+}
+
+a, a:link, a:visited, a:hover, a:active {
+  color: #2842f4;
+}

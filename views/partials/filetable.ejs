@@ -1,0 +1,20 @@
+<br/>
+
+<table>
+	<tr>
+		<th>Category</th>
+		<th>Filename</th>
+		<th>File Timestamp</th>
+		<th>File Size</th>
+		<th>Delete File</th>
+	</tr>
+	<% data.forEach(function(d) { %>
+		<tr>
+			<th><%= d.category %></th>
+			<th><a href='download/?renamed=<%= d.renamed %>&filename=<%= d.filename %>'><%= d.filename %></a></th>
+			<th><%= d.uploaded %></th>
+			<th><%= d.filesize %></th>
+			<th><%= d.file_id %></th>
+		</tr>
+	<% }) %>
+</table>

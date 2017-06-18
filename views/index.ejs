@@ -9,18 +9,13 @@
 	
 	<main>
 
+        <%- include ./partials/upload %>
         <%- include ./partials/search %>
+        
+        <% if(data) { %>
+        <%- include ./partials/filetable %>
+        <% } %>
 
-    	<textarea rows="25" cols="50" readonly>
-    	{
-    		"cast_name": "Amuro Ray",
-    		"faction_name": "Earth Federation",
-    		"model": "RX-78-2 Gundam",
-    		"english_voice": "Brad Swaile",
-    		"japanese_voice": "Tōru Furuya",
-    		"era_name": "Universal Century"
-    	}
-    	</textarea>
     </main>
     <%- include ./partials/footer %>
     <%- include ./partials/script %>

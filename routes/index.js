@@ -1,33 +1,52 @@
 var express = require('express');
 var router = express.Router();
+let pgp = require('pg-promise')();
+let connString = process.env.DATABASE_URL;
+let dbase = pgp(connString);
 
 var db = require('../db/queries');
+
+var multer = require('multer')
+
+var upload = multer({
+  dest: __dirname + '/../public/files/',
+  limits: {fileSize: 10000000, files: 1},
+})
+
+function bytesToSize(bytes) {
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+  if (bytes === 0) return 'n/a'
+  const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)), 10)
+  if (i === 0) return `${bytes} ${sizes[i]})`
+  return `${(bytes / (1024 ** i)).toFixed(1)} ${sizes[i]}`
+}
+
 
 /* GET home page. */
 /*router.get('/', function(req, res, next) {
   res.render('index', { title: 'Gundam API' });
 });*/
 
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'GUNDAM API' });
+router.get('/', db.getAllFiles);
+router.get('/download', function(req, res){
+  var file = __dirname + `/../public/files/${req.query.renamed}`;
+  var newname = `${req.query.filename}`;
+  res.download(file, newname);
 });
 
-//Url for testing query string filtering. Very limited applications due to WHERE arguments causing errors.
-//router.get('/test/', db.getTest);
-
-router.get('/people/', db.getAllCast);
 router.get('/people/:id', db.getOneCast);
-router.post('/people/', db.createCast);
-router.put('/people/:id', db.updateCast);
+
+//Upload Functionality
+router.post('/upload', upload.single('upload'), function(req, res) {
+  let filesize = bytesToSize(req.file.size);
+  console.log(bytesToSize(req.file.size))
+	dbase.none('INSERT INTO filelist(filename, renamed, filesize, category)' + 'VALUES(${originalname}, ${filename},'+ `'${filesize}', '${req.body.cat}')`, req.file)
+	.then(
+    res.status(200),
+    setTimeout(res.redirect('/'), 100000)
+		)
+});
+
 router.delete('/people/:id', db.deleteCast);
-
-router.get('/mweapon/', db.getAllMWeapons);
-router.get('/mweapon/:id', db.getOneMWeapon);
-router.post('/mweapon/', db.createMWeapon);
-router.put('/mweapon/:id', db.updateMWeapon);
-router.delete('/mweapon/:id', db.deleteMWeapon);
-
-router.get('/manufacturer/', db.getAllManufacturers);
-router.get('/manufacturer/:id', db.getOneManufacturer);
 
 module.exports = router;

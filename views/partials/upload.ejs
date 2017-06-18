@@ -1,0 +1,16 @@
+<form action="/upload" method="POST" enctype="multipart/form-data">
+
+Select a file to upload:
+<input type="file" name="upload" required>
+Category:
+<select name="cat" required>
+	<option value="" disabled selected hidden>Please Choose...</option>
+	<option value="Document">Document</option>
+	<option value="Music">Music</option>
+	<option value="Video">Video</option>
+	<option value="Picture">Picture</option>
+	<option value="Game">Game</option>
+</select>
+<input type="submit" value="Upload File">
+
+</form>

@@ -11,10 +11,10 @@
 	<% data.forEach(function(d) { %>
 		<tr>
 			<th><%= d.category %></th>
-			<th><a href='download/?renamed=<%= d.renamed %>&filename=<%= d.filename %>'><%= d.filename %></a></th>
+			<th><a href='../download/?renamed=<%= d.renamed %>&filename=<%= d.filename %>'><%= d.filename %></a></th>
 			<th><%= d.uploaded %></th>
 			<th><%= d.filesize %></th>
-			<th><a id='delete' href='delete/?renamed=<%= d.renamed %>&fileid=<%= d.file_id %>'>X</a></th>
+			<th><a id='delete' href='../delete/?renamed=<%= d.renamed %>&fileid=<%= d.file_id %>'>X</a></th>
 		</tr>
 	<% }) %>
 </table>

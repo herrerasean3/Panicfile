@@ -19,10 +19,9 @@ function getAllFiles(req, res, next) {
     });
 }
 
-//Parses the integer from the URL parameter.
-//Then it SELECTs everything in the database with the parsed ID.
-//Barring any errors with duplicate IDs, will always return exactly one result.
-//Satisfies R in CRUD.
+//Serves up a search term and category as querystrings, allowing us to sort.
+//If the value of either querystring is null, it counts as a wildcard search.
+//Satisfies R in CRUD, with additional filtering functionality.
 function searchFile(req, res, next) {
   if (req.query.cat2 == "null") {
     req.query.cat2 = "";
@@ -41,8 +40,9 @@ function searchFile(req, res, next) {
 
 
 
-//Deletes the row at the target ID. Simple enough.
-//Satisfies D of CRUD.
+// Deletes the row at the target ID. Simple enough.
+// Satisfies D of CRUD.
+// fs.unlinkSync deletes files from the server, but is currently bugged. When a file is deleted it will return an error upon successfully deleting. Don't ask.
 function deleteFile(req, res, next) {
   let fileID = parseInt(req.query.fileid);
   fs.unlinkSync(`public/files/${req.query.renamed}`, db.result(`DELETE FROM filelist WHERE file_id = ${fileID}`)

@@ -45,6 +45,15 @@ main {
 	margin: auto 0px;
 }
 
+main p, main form {
+	padding: 5px 0px;
+	margin: 0px auto;
+}
+
+main p {
+	color: #ffffff;
+}
+
 table {
 	width: 100%;
 	margin: auto 0px;

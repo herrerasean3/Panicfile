@@ -45,13 +45,14 @@ function searchFile(req, res, next) {
 // fs.unlinkSync deletes files from the server, but is currently bugged. When a file is deleted it will return an error upon successfully deleting. Don't ask.
 function deleteFile(req, res, next) {
   let fileID = parseInt(req.query.fileid);
-  fs.unlinkSync(`public/files/${req.query.renamed}`, db.result(`DELETE FROM filelist WHERE file_id = ${fileID}`)
+  fs.unlinkSync(`public/files/${req.query.renamed}`);
+    db.result(`DELETE FROM filelist WHERE file_id = ${fileID}`)
     .then(function(result) {
       getAllFiles();
     })
     .catch(function(err) {
       getAllFiles();
-    }))
+    })
 }
 
 //CRUD
